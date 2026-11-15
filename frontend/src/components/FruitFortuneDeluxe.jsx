@@ -15,6 +15,14 @@ const initialGrid = [
   ["🍋", "🍉", "🍒", "🍍", "🍊"],
   ["🍇", "🍊", "🍋", "🍒", "🍉"],
 ];
+const fruitPayoutTable = [
+  { symbol: "🍒", payouts: { 3: 2, 4: 5, 5: 10 } },
+  { symbol: "🍋", payouts: { 3: 3, 4: 6, 5: 12 } },
+  { symbol: "🍊", payouts: { 3: 4, 4: 8, 5: 15 } },
+  { symbol: "🍇", payouts: { 3: 5, 4: 10, 5: 20 } },
+  { symbol: "🍉", payouts: { 3: 8, 4: 15, 5: 30 } },
+  { symbol: "🍍 WILD", payouts: { 3: 10, 4: 25, 5: 50 } },
+];
 
 function createRandomGrid() {
   return Array.from({ length: 3 }, () =>
@@ -320,6 +328,33 @@ function FruitFortuneDeluxe({
       </button>
       <p className="fruit-deluxe-wild-info"><strong>🍍 WILD</strong> замінює будь-який фрукт на лінії. Три WILD поспіль — множник ×10.</p>
       <p className="fruit-deluxe-bonus-info"><strong>🍉 БОНУС</strong> п’ять або більше кавунів на полі дають 5 безкоштовних обертань.</p>
+      <details className="fruit-deluxe-paytable">
+        <summary>Таблиця виплат</summary>
+        <p>Виграш за одну лінію при ставці {bet.toLocaleString("uk-UA")} кредитів:</p>
+        <div className="fruit-deluxe-paytable-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Символ</th>
+                <th>3 в ряд</th>
+                <th>4 в ряд</th>
+                <th>5 в ряд</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fruitPayoutTable.map(({ symbol, payouts }) => (
+                <tr key={symbol}>
+                  <th scope="row">{symbol}</th>
+                  {[3, 4, 5].map((count) => (
+                    <td key={count}>{(bet * payouts[count]).toLocaleString("uk-UA")}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p>Сума в таблиці показана для однієї лінії. 🍍 WILD замінює фрукт і може складати комбінацію разом із ним.</p>
+      </details>
 
       <div className="fruit-deluxe-board" aria-label="Ігрове поле: 5 барабанів і 3 ряди" aria-busy={isSpinning}>
         {grid.flatMap((row, rowIndex) => row.map((symbol, reelIndex) => {

@@ -1,6 +1,8 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { ObjectId } from "mongodb";
+import { requireAuth } from "../middleware/requireAuth.js";
 
 const router = Router();
 
@@ -14,6 +16,47 @@ function getKyivDateKey() {
   const dateParts = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
   return `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
 }
+
+router.get("/profile", requireAuth, async (request, response) => {
+  try {
+    const database = request.app.locals.database;
+    const user = await database.collection("users").findOne(
+      { _id: new ObjectId(request.userId) },
+      { projection: { email: 1, phone: 1, createdAt: 1 } },
+    );
+
+    if (!user) {
+      return response.status(404).json({ error: "Профіль користувача не знайдено" });
+    }
+
+    const progress = await database.collection("progress").findOne(
+      { userId: request.userId },
+      {
+        projection: {
+          _id: 0,
+          balance: 1,
+          bestWin: 1,
+          totalWinnings: 1,
+          totalCreditsGranted: 1,
+        },
+      },
+    );
+
+    return response.json({
+      id: user._id.toString(),
+      email: user.email,
+      phone: user.phone || "",
+      createdAt: user.createdAt,
+      balance: progress?.balance ?? 0,
+      bestWin: progress?.bestWin ?? 0,
+      totalWinnings: progress?.totalWinnings ?? 0,
+      totalCreditsGranted: progress?.totalCreditsGranted ?? 0,
+    });
+  } catch (error) {
+    console.error("Loading user profile failed:", error.message);
+    return response.status(500).json({ error: "Не вдалося завантажити профіль" });
+  }
+});
 
 router.post("/register", async (request, response) => {
   const email = String(request.body.email || "").trim().toLowerCase();

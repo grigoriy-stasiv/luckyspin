@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { slotSymbols } from "./data/slotConfig.js";
+import { slotSymbols, winMultipliers } from "./data/slotConfig.js";
 import Header from "./components/Header.jsx";
 import BetPanel from "./components/BetPanel.jsx";
 import GameHistory from "./components/GameHistory.jsx";
@@ -578,6 +578,21 @@ function App() {
             <div className="current-bet">
               СТАВКА: <strong>{bet.toLocaleString("uk-UA")}</strong> кредитів
             </div>
+
+            {selectedGameId === "classic-fruit" && (
+              <details className="classic-paytable">
+                <summary>Таблиця виплат</summary>
+                <p>Три однакові символи на барабанах:</p>
+                <div className="classic-paytable-list">
+                  {slotSymbols.map((symbol) => (
+                    <div className="classic-paytable-row" key={symbol}>
+                      <span>{symbol} {symbol} {symbol}</span>
+                      <strong>{(bet * winMultipliers[symbol]).toLocaleString("uk-UA")} кредитів</strong>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
 
             <div className="reels">
               <div className={`reel ${isSpinning ? "spinning" : ""} ${hasWinningCombination ? "winning" : ""}`}>
