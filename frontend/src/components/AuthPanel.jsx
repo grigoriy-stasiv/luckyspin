@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function AuthPanel({ account, onLogin, onLogout }) {
   const [mode, setMode] = useState("login");
@@ -7,6 +7,42 @@ function AuthPanel({ account, onLogin, onLogout }) {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+
+  useEffect(() => {
+    setProfile(null);
+    setIsProfileOpen(false);
+    setProfileMessage("");
+  }, [account?.email]);
+
+  const toggleProfile = async () => {
+    if (isProfileOpen) {
+      setIsProfileOpen(false);
+      return;
+    }
+
+    setIsProfileLoading(true);
+    setProfileMessage("");
+    try {
+      const token = localStorage.getItem("luckyspin-token");
+      const response = await fetch("/api/auth/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Не вдалося завантажити профіль");
+      }
+      setProfile(result);
+      setIsProfileOpen(true);
+    } catch (error) {
+      setProfileMessage(error.message || "Не вдалося з’єднатися із сервером");
+    } finally {
+      setIsProfileLoading(false);
+    }
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -56,7 +92,34 @@ function AuthPanel({ account, onLogin, onLogout }) {
           <div className="auth-content">
             <p>Ви увійшли до акаунта LuckySpin.</p>
             {message && <p className="auth-message" role="status">{message}</p>}
-            <button className="auth-submit" onClick={onLogout}>Вийти</button>
+            <button className="profile-open-button" onClick={toggleProfile} disabled={isProfileLoading}>
+              {isProfileLoading ? "Завантаження профілю..." : isProfileOpen ? "Закрити профіль" : "Мій профіль"}
+            </button>
+            {profileMessage && <p className="auth-message" role="alert">{profileMessage}</p>}
+            {isProfileOpen && profile && (
+              <section className="user-profile" aria-label="Профіль користувача">
+                <h3>Мій профіль</h3>
+                <dl>
+                  <div><dt>Email</dt><dd>{profile.email}</dd></div>
+                  <div><dt>Телефон</dt><dd>{profile.phone || "Не вказано"}</dd></div>
+                  <div><dt>Дата реєстрації</dt><dd>{new Date(profile.createdAt).toLocaleDateString("uk-UA")}</dd></div>
+                  <div><dt>Баланс</dt><dd>{profile.balance.toLocaleString("uk-UA")} кредитів</dd></div>
+                  <div><dt>Найбільший виграш</dt><dd>{profile.bestWin.toLocaleString("uk-UA")} кредитів</dd></div>
+                  <div><dt>Усього виграно</dt><dd>{profile.totalWinnings.toLocaleString("uk-UA")} кредитів</dd></div>
+                  <div><dt>Усього нараховано</dt><dd>{profile.totalCreditsGranted.toLocaleString("uk-UA")} кредитів</dd></div>
+                </dl>
+              </section>
+            )}
+            <button
+              className="auth-submit"
+              onClick={() => {
+                setProfile(null);
+                setIsProfileOpen(false);
+                onLogout();
+              }}
+            >
+              Вийти
+            </button>
           </div>
         ) : (
           <form className="auth-content auth-form" onSubmit={handleSubmit}>
