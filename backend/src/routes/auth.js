@@ -22,7 +22,7 @@ router.get("/profile", requireAuth, async (request, response) => {
     const database = request.app.locals.database;
     const user = await database.collection("users").findOne(
       { _id: new ObjectId(request.userId) },
-      { projection: { email: 1, phone: 1, createdAt: 1 } },
+      { projection: { email: 1, phone: 1, displayName: 1, createdAt: 1 } },
     );
 
     if (!user) {
@@ -46,6 +46,7 @@ router.get("/profile", requireAuth, async (request, response) => {
       id: user._id.toString(),
       email: user.email,
       phone: user.phone || "",
+      displayName: user.displayName || "",
       createdAt: user.createdAt,
       balance: progress?.balance ?? 0,
       bestWin: progress?.bestWin ?? 0,
@@ -55,6 +56,57 @@ router.get("/profile", requireAuth, async (request, response) => {
   } catch (error) {
     console.error("Loading user profile failed:", error.message);
     return response.status(500).json({ error: "Не вдалося завантажити профіль" });
+  }
+});
+
+router.patch("/profile", requireAuth, async (request, response) => {
+  const displayName = String(request.body.displayName || "").trim();
+
+  if (displayName.length < 2 || displayName.length > 20 || !/^[\p{L}\p{N}_ -]+$/u.test(displayName)) {
+    return response.status(400).json({
+      error: "Нікнейм має містити 2–20 символів: літери, цифри, пробіли, дефіс або підкреслення",
+    });
+  }
+
+  try {
+    const result = await request.app.locals.database.collection("users").updateOne(
+      { _id: new ObjectId(request.userId) },
+      { $set: { displayName } },
+    );
+
+    if (result.matchedCount === 0) {
+      return response.status(404).json({ error: "Профіль користувача не знайдено" });
+    }
+
+    return response.json({ displayName });
+  } catch (error) {
+    console.error("Updating user display name failed:", error.message);
+    return response.status(500).json({ error: "Не вдалося зберегти нікнейм" });
+  }
+});
+
+router.put("/profile", requireAuth, async (request, response) => {
+  const phone = String(request.body.phone || "").trim();
+  const phoneDigits = phone.replace(/\D/g, "");
+
+  if (!/^[+\d\s()-]+$/.test(phone) || phoneDigits.length < 10 || phoneDigits.length > 15) {
+    return response.status(400).json({ error: "Введіть коректний номер телефону з 10–15 цифр" });
+  }
+
+  try {
+    const result = await request.app.locals.database.collection("users").updateOne(
+      { _id: new ObjectId(request.userId) },
+      { $set: { phone } },
+    );
+
+    if (result.matchedCount === 0) {
+      return response.status(404).json({ error: "Профіль користувача не знайдено" });
+    }
+
+    return response.json({ phone });
+  } catch (error) {
+    console.error("Updating user phone failed:", error.message);
+    return response.status(500).json({ error: "Не вдалося оновити номер телефону" });
   }
 });
 
@@ -101,6 +153,7 @@ router.post("/register", async (request, response) => {
       totalWinnings: 0,
       totalCreditsGranted: 0,
       fruitDeluxeFreeSpins: 0,
+      pharaohFreeSpins: 0,
       history: [],
       updatedAt: new Date(),
     });
@@ -149,6 +202,7 @@ router.post("/login", async (request, response) => {
           totalWinnings: 0,
           totalCreditsGranted: 0,
           fruitDeluxeFreeSpins: 0,
+          pharaohFreeSpins: 0,
           history: [],
         },
       },
@@ -172,7 +226,11 @@ router.post("/login", async (request, response) => {
 
     return response.json({
       token,
-      user: { id: user._id.toString(), email: user.email },
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        displayName: user.displayName || "",
+      },
       dailyBonusAwarded: Boolean(dailyBonus),
     });
   } catch (error) {

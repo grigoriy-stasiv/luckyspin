@@ -1,5 +1,6 @@
 function Header({
   balance,
+  displayName,
   isAdmin,
   isAdminPanelOpen,
   onToggleAdminPanel,
@@ -22,6 +23,7 @@ function Header({
       </nav>
 
       <div className="header-actions">
+        {displayName && <span className="header-user-name">👤 {displayName}</span>}
         {isAdmin && (
           <button
             className="admin-header-button"

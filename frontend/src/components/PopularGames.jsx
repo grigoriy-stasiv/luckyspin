@@ -1,4 +1,4 @@
-function PopularGames({ onSelectClassicFruit, onSelectFruitDeluxe }) {
+function PopularGames({ onSelectClassicFruit, onSelectFruitDeluxe, onSelectPharaohTreasures }) {
   return (
     <section className="games" id="games">
       <div className="section-heading">
@@ -21,6 +21,13 @@ function PopularGames({ onSelectClassicFruit, onSelectFruitDeluxe }) {
           <h3>Fruit Fortune Deluxe</h3>
           <p>Новий автомат із 5 барабанами та 3 рядами</p>
           <button onClick={onSelectFruitDeluxe}>Відкрити</button>
+        </article>
+
+        <article className="game-card">
+          <div className="game-image">🔺</div>
+          <h3>Скарби фараона</h3>
+          <p>Єгипетський автомат із WILD-Сфінксом і бонусом скарабеїв</p>
+          <button onClick={onSelectPharaohTreasures}>Грати</button>
         </article>
 
         <article className="game-card">
