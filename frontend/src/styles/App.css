@@ -108,6 +108,16 @@ a {
   gap: 24px;
 }
 
+.header-user-name {
+  max-width: 190px;
+  overflow: hidden;
+  color: #f3d77e;
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .admin-header-button {
   padding: 9px 13px;
   border: 1px solid #ffc107;
@@ -556,6 +566,241 @@ a {
 
 .fruit-deluxe-screen h1 span {
   color: #ffc107;
+}
+
+.pharaoh-screen {
+  position: relative;
+  max-width: 1050px;
+  overflow: hidden;
+  padding: 20px clamp(14px, 3vw, 30px) 28px;
+  border: 4px ridge #d8ad50;
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 50% 0, rgba(104, 46, 167, 0.55), transparent 48%),
+    radial-gradient(circle at 50% 52%, #251044, #100b1d 78%);
+  box-shadow: 0 0 60px rgba(103, 47, 172, 0.25), inset 0 0 35px rgba(255, 218, 117, 0.06);
+}
+
+.pharaoh-screen::before {
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(255, 218, 117, 0.45);
+  border-radius: 14px;
+  content: "";
+  pointer-events: none;
+}
+
+.pharaoh-marquee {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 0 auto 18px;
+  padding: 8px 18px 14px;
+  border-top: 1px solid rgba(255, 220, 113, 0.45);
+  border-bottom: 2px solid #d9ad4b;
+  background: linear-gradient(90deg, transparent, rgba(87, 42, 134, 0.65), transparent);
+  text-align: center;
+}
+
+.pharaoh-marquee-eye {
+  color: #62dcf4;
+  font-size: clamp(30px, 5vw, 54px);
+  filter: drop-shadow(0 0 12px rgba(55, 208, 255, 0.75));
+}
+
+.pharaoh-screen h1 span {
+  color: #f2ca57;
+  text-shadow: 0 2px 0 #714311, 0 0 18px rgba(255, 198, 66, 0.6);
+}
+
+.pharaoh-screen h1 {
+  color: #fff1b8;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 1px;
+  text-align: center;
+  text-shadow: 0 3px 0 #531663, 0 0 20px rgba(252, 192, 73, 0.55);
+  text-transform: uppercase;
+}
+
+.pharaoh-screen .eyebrow {
+  margin: 2px 0 5px;
+  color: #59dff2;
+  text-align: center;
+  letter-spacing: 3px;
+  text-shadow: 0 0 12px rgba(70, 204, 255, 0.55);
+}
+
+.pharaoh-screen .fruit-deluxe-description {
+  margin: 6px 0 0;
+  color: #dfc9ff;
+  text-align: center;
+}
+
+.pharaoh-rules {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.pharaoh-screen .fruit-deluxe-wild-info,
+.pharaoh-screen .fruit-deluxe-bonus-info {
+  flex: 1;
+  margin: 0;
+  border: 1px solid rgba(115, 198, 255, 0.38);
+  background: linear-gradient(110deg, rgba(29, 41, 96, 0.75), rgba(52, 28, 83, 0.7));
+  color: #eee6ff;
+  box-shadow: inset 0 0 16px rgba(117, 79, 193, 0.2);
+}
+
+.pharaoh-screen .fruit-deluxe-wild-info strong {
+  color: #61ddf2;
+}
+
+.pharaoh-screen .fruit-deluxe-bonus-info strong {
+  color: #f0cb5f;
+}
+
+.pharaoh-screen .fruit-deluxe-paytable {
+  border-color: rgba(237, 195, 87, 0.55);
+  background: linear-gradient(130deg, rgba(30, 33, 78, 0.96), rgba(53, 25, 77, 0.96));
+  color: #e8dcff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.pharaoh-screen .fruit-deluxe-paytable summary {
+  color: #ffe48b;
+}
+
+.pharaoh-screen .fruit-deluxe-paytable p {
+  color: #cfc3e6;
+}
+
+.pharaoh-screen .fruit-deluxe-paytable td,
+.pharaoh-screen .fruit-deluxe-paytable th {
+  border-color: rgba(231, 201, 121, 0.18);
+}
+
+.pharaoh-board {
+  gap: 8px;
+  margin-top: 15px;
+  padding: 13px;
+  border: 4px ridge #dcb64f;
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(96, 37, 150, 0.55), transparent 62%),
+    linear-gradient(180deg, #160f2e, #080914);
+  box-shadow: 0 0 24px rgba(127, 62, 211, 0.35), inset 0 0 28px rgba(0, 0, 0, 0.85);
+}
+
+.pharaoh-cell {
+  min-height: clamp(76px, 11vw, 126px);
+  border: 2px solid #c9a443;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(151, 62, 218, 0.8), transparent 60%),
+    linear-gradient(145deg, #4c207c, #180e32);
+  font-size: clamp(38px, 6.5vw, 72px);
+  text-shadow: 0 4px 9px rgba(0, 0, 0, 0.7), 0 0 14px rgba(245, 216, 111, 0.35);
+  box-shadow: inset 0 0 18px rgba(8, 3, 20, 0.72), 0 0 10px rgba(241, 193, 72, 0.22);
+}
+
+.pharaoh-cell.winning {
+  border-color: #fff0a1;
+  background: radial-gradient(circle, #8d5c1a, #43205e 75%);
+  box-shadow: 0 0 22px rgba(255, 217, 88, 0.85), inset 0 0 18px rgba(255, 230, 142, 0.25);
+}
+
+.pharaoh-console {
+  margin-top: 15px;
+  padding: 14px 18px 18px;
+  border: 2px solid #bc9441;
+  border-radius: 13px;
+  background:
+    linear-gradient(180deg, rgba(25, 41, 91, 0.96), rgba(10, 14, 38, 0.98));
+  box-shadow: inset 0 0 22px rgba(78, 129, 223, 0.18), 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.pharaoh-console-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(249, 214, 110, 0.4);
+}
+
+.pharaoh-screen .fruit-deluxe-current-bet {
+  margin: 5px 0;
+  color: #ffe991;
+  text-align: left;
+}
+
+.pharaoh-screen .slot-balance {
+  min-width: 150px;
+  margin: 0;
+  color: #ded8f2;
+}
+
+.pharaoh-screen .slot-balance strong {
+  color: #ffe16a;
+  text-shadow: 0 0 12px rgba(255, 211, 61, 0.45);
+}
+
+.pharaoh-console .auto-spin-controls {
+  margin: 12px 0;
+  color: #d7d6f9;
+}
+
+.pharaoh-console .auto-spin-controls button {
+  border-color: rgba(105, 188, 246, 0.55);
+  background: rgba(25, 54, 112, 0.8);
+  color: #e6edff;
+}
+
+.pharaoh-screen .bet-panel {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid rgba(126, 170, 237, 0.25);
+  border-radius: 10px;
+  background: rgba(9, 15, 38, 0.55);
+}
+
+.pharaoh-screen .bet-panel p {
+  color: #ffe48b;
+}
+
+.pharaoh-screen .bet-option {
+  border-color: #98772c;
+  background: linear-gradient(180deg, #22285a, #141735);
+  color: #f5e8be;
+}
+
+.pharaoh-screen .bet-option.active {
+  border-color: #ffe18a;
+  background: linear-gradient(135deg, #ffe782, #bd8120);
+  color: #20132a;
+}
+
+.pharaoh-spin-button {
+  min-height: 62px;
+  margin: 8px auto 0;
+  border: 2px solid #ffe58b;
+  background: linear-gradient(180deg, #f8dc75, #bd7c18);
+  color: #21132c;
+  font-size: clamp(17px, 2.3vw, 23px);
+  letter-spacing: 1px;
+  text-shadow: 0 1px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 22px rgba(255, 193, 45, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.pharaoh-spin-button:hover:not(:disabled) {
+  background: linear-gradient(180deg, #fff0a3, #d89725);
+}
+
+.pharaoh-screen .game-message {
+  color: #ffe16a;
+  text-shadow: 0 0 14px rgba(220, 168, 255, 0.65);
 }
 
 .fruit-deluxe-music-button,
@@ -1071,6 +1316,35 @@ a {
     min-height: 64px;
     border-radius: 7px;
   }
+
+  .pharaoh-screen {
+    padding: 16px 10px 20px;
+  }
+
+  .pharaoh-screen::before {
+    inset: 5px;
+  }
+
+  .pharaoh-rules {
+    flex-direction: column;
+  }
+
+  .pharaoh-console-status {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .pharaoh-board {
+    gap: 5px;
+    padding: 7px;
+  }
+
+  .pharaoh-cell {
+    min-height: 68px;
+    border-width: 1px;
+    font-size: clamp(30px, 8vw, 52px);
+  }
 }
 
 @media (max-width: 600px) {
@@ -1088,6 +1362,42 @@ a {
 
   .balance {
     display: none;
+  }
+
+  .header-actions {
+    gap: 10px;
+  }
+
+  .header-user-name {
+    max-width: 125px;
+    font-size: 11px;
+  }
+
+  .pharaoh-marquee {
+    gap: 7px;
+    padding: 6px 4px 10px;
+  }
+
+  .pharaoh-marquee-eye {
+    font-size: 27px;
+  }
+
+  .pharaoh-screen h1 {
+    font-size: 27px;
+  }
+
+  .pharaoh-console {
+    padding: 11px 8px 13px;
+  }
+
+  .pharaoh-screen .fruit-deluxe-current-bet {
+    font-size: 11px;
+    letter-spacing: 0.3px;
+  }
+
+  .pharaoh-spin-button {
+    min-height: 54px;
+    padding: 12px 8px;
   }
 
   .hero h1 {
@@ -1265,6 +1575,38 @@ a {
   color: #f3d77e;
   text-align: right;
   overflow-wrap: anywhere;
+}
+
+.profile-phone-form,
+.profile-edit-form {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.profile-phone-form label,
+.profile-edit-form label {
+  display: grid;
+  gap: 6px;
+  color: #c9c9c9;
+  font-size: 12px;
+}
+
+.profile-phone-form input,
+.profile-edit-form input {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background: #090909;
+  color: #fff;
+}
+
+.profile-phone-form > div,
+.profile-edit-form > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .auth-message {

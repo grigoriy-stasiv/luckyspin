@@ -28,6 +28,24 @@ const fruitPaylines = [
   [0, 1, 2, 1, 0],
   [2, 1, 0, 1, 2],
 ];
+const pharaohSymbolBag = [
+  "🪙", "🪙", "🪙", "🪙", "🪙",
+  "🐍", "🐍", "🐍", "🐍", "🐍",
+  "👁️", "👁️", "👁️", "👁️", "👁️",
+  "🏺", "🏺", "🏺", "🏺", "🏺",
+  "💎", "💎", "💎",
+  "🪲", "🪲",
+  "🦁", "🦁", "🦁",
+];
+const pharaohPayouts = {
+  "🪙": { 3: 2, 4: 5, 5: 10 },
+  "🐍": { 3: 3, 4: 6, 5: 12 },
+  "👁️": { 3: 4, 4: 8, 5: 15 },
+  "🏺": { 3: 5, 4: 10, 5: 20 },
+  "💎": { 3: 8, 4: 15, 5: 30 },
+};
+const pharaohWildPayouts = { 3: 10, 4: 25, 5: 50 };
+const pharaohPaylines = fruitPaylines;
 
 function createFruitGrid() {
   return Array.from({ length: 3 }, () =>
@@ -56,6 +74,37 @@ function getFruitLineWins(grid, bet) {
       symbol,
       matchCount,
       containsWild: lineSymbols.slice(0, matchCount).includes("🍍"),
+      rowsByColumn,
+      win: bet * multiplier,
+    }];
+  });
+}
+
+function createPharaohGrid() {
+  return Array.from({ length: 3 }, () =>
+    Array.from({ length: 5 }, () => pharaohSymbolBag[Math.floor(Math.random() * pharaohSymbolBag.length)]),
+  );
+}
+
+function getPharaohLineWins(grid, bet) {
+  return pharaohPaylines.flatMap((rowsByColumn, lineIndex) => {
+    const lineSymbols = rowsByColumn.map((row, column) => grid[row][column]);
+    const symbol = lineSymbols.find((lineSymbol) => lineSymbol !== "🦁" && lineSymbol !== "🪲") ?? "🦁";
+    let matchCount = 0;
+
+    while (matchCount < lineSymbols.length &&
+      (lineSymbols[matchCount] === symbol || lineSymbols[matchCount] === "🦁")) {
+      matchCount += 1;
+    }
+
+    const multiplier = symbol === "🦁" ? pharaohWildPayouts[matchCount] : pharaohPayouts[symbol][matchCount];
+    if (!multiplier) return [];
+
+    return [{
+      lineIndex: lineIndex + 1,
+      symbol,
+      matchCount,
+      containsWild: lineSymbols.slice(0, matchCount).includes("🦁"),
       rowsByColumn,
       win: bet * multiplier,
     }];
@@ -238,6 +287,129 @@ router.post("/fruit-deluxe/spin", requireAuth, async (request, response) => {
     });
   } catch (error) {
     console.error("Fruit Fortune Deluxe spin failed:", error.message);
+    return response.status(500).json({ error: "Не вдалося завершити обертання" });
+  }
+});
+
+router.post("/pharaoh-treasures/spin", requireAuth, async (request, response) => {
+  const { bet } = request.body;
+  if (!allowedBets.includes(bet)) {
+    return response.status(400).json({ error: "Некоректна ставка" });
+  }
+
+  const grid = createPharaohGrid();
+  const lineWins = getPharaohLineWins(grid, bet);
+  const win = lineWins.reduce((sum, line) => sum + line.win, 0);
+  const scarabCount = grid.flat().filter((symbol) => symbol === "🪲").length;
+  const bonusSpinsAwarded = scarabCount >= 5 ? 5 : 0;
+
+  try {
+    const progressCollection = request.app.locals.database.collection("progress");
+    const currentProgress = await progressCollection.findOne(
+      { userId: request.userId },
+      { projection: { _id: 0, balance: 1, pharaohFreeSpins: 1 } },
+    );
+
+    if (!currentProgress) {
+      return response.status(404).json({ error: "Прогрес користувача не знайдено" });
+    }
+
+    const settleSpin = (isFreeSpin) => {
+      const totalBet = isFreeSpin ? 0 : bet * pharaohPaylines.length;
+      const round = {
+        symbols: grid.flat().join(" "),
+        win,
+        bet: totalBet,
+        game: "Скарби фараона",
+        isFreeSpin,
+      };
+      const filter = isFreeSpin
+        ? { userId: request.userId, pharaohFreeSpins: { $gt: 0 } }
+        : {
+            userId: request.userId,
+            balance: { $gte: totalBet },
+            pharaohFreeSpins: { $in: [null, 0] },
+          };
+
+      return progressCollection.findOneAndUpdate(
+        filter,
+        [
+          {
+            $set: {
+              balance: { $add: ["$balance", win - totalBet] },
+              bet: { $literal: bet },
+              pharaohFreeSpins: {
+                $add: [
+                  { $ifNull: ["$pharaohFreeSpins", 0] },
+                  bonusSpinsAwarded - (isFreeSpin ? 1 : 0),
+                ],
+              },
+              lastWin: {
+                $cond: [
+                  { $gt: [{ $literal: win }, 0] },
+                  { $literal: win },
+                  { $ifNull: ["$lastWin", 0] },
+                ],
+              },
+              bestWin: { $max: [{ $ifNull: ["$bestWin", 0] }, { $literal: win }] },
+              totalWinnings: {
+                $add: [{ $ifNull: ["$totalWinnings", 0] }, { $literal: win }],
+              },
+              history: { $literal: [round] },
+              updatedAt: { $literal: new Date() },
+            },
+          },
+        ],
+        { returnDocument: "after", projection: { _id: 0, userId: 0, updatedAt: 0 } },
+      );
+    };
+
+    let isFreeSpin = (currentProgress.pharaohFreeSpins ?? 0) > 0;
+    let updatedProgress = await settleSpin(isFreeSpin);
+
+    if (!updatedProgress && isFreeSpin) {
+      isFreeSpin = false;
+      updatedProgress = await settleSpin(false);
+    } else if (!updatedProgress) {
+      const latestProgress = await progressCollection.findOne(
+        { userId: request.userId },
+        { projection: { _id: 0, balance: 1, pharaohFreeSpins: 1 } },
+      );
+      if ((latestProgress?.pharaohFreeSpins ?? 0) > 0) {
+        isFreeSpin = true;
+        updatedProgress = await settleSpin(true);
+        if (!updatedProgress) {
+          isFreeSpin = false;
+          updatedProgress = await settleSpin(false);
+        }
+      }
+    }
+
+    if (!updatedProgress) {
+      const latestProgress = await progressCollection.findOne(
+        { userId: request.userId },
+        { projection: { _id: 0, balance: 1 } },
+      );
+      return response.status(409).json({
+        error: "Недостатньо кредитів для ставки на п’ять ліній. Зверніться до адміністратора.",
+        balance: latestProgress?.balance ?? 0,
+      });
+    }
+
+    const totalBet = isFreeSpin ? 0 : bet * pharaohPaylines.length;
+    return response.json({
+      ...updatedProgress,
+      grid,
+      lineWins,
+      win,
+      totalBet,
+      isFreeSpin,
+      bonusAwarded: bonusSpinsAwarded > 0,
+      bonusSpinsAwarded,
+      scarabCount,
+    });
+  } catch (error) {
+    console.error("Pharaoh Treasures spin failed:", error.message);
     return response.status(500).json({ error: "Не вдалося завершити обертання" });
   }
 });

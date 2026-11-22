@@ -142,7 +142,7 @@ function AdminPanel({ account, isOpen, onAdminStatusChange, onBalanceChanged }) 
   };
 
   const filteredUsers = users.filter((user) =>
-    user.email.toLowerCase().includes(searchTerm.trim().toLowerCase()),
+    `${user.displayName || ""} ${user.email}`.toLowerCase().includes(searchTerm.trim().toLowerCase()),
   );
 
   if (!account || !isAdmin || !isOpen) {
@@ -175,61 +175,65 @@ function AdminPanel({ account, isOpen, onAdminStatusChange, onBalanceChanged }) 
         {message && <p className="admin-message" role="status">{message}</p>}
 
         <div className="admin-user-list">
-          {filteredUsers.map((user) => (
-            <article className="admin-user" key={user.id}>
-              <strong>{user.email}</strong>
-              <span>Баланс: {user.balance.toLocaleString("uk-UA")} кредитів</span>
-              <span>Найбільший виграш: {user.bestWin.toLocaleString("uk-UA")}</span>
-              <span>Усього поповнено: {user.totalCreditsGranted.toLocaleString("uk-UA")} кредитів</span>
-              <span>Усього виграно: {user.totalWinnings.toLocaleString("uk-UA")} кредитів</span>
-              <span>Реєстрація: {new Date(user.createdAt).toLocaleDateString("uk-UA")}</span>
-              <div className="admin-user-actions">
-                <button
-                  className="admin-credit-button"
-                  onClick={() => {
-                    setCreditUserId(creditUserId === user.id ? "" : user.id);
-                    setCreditAmount("");
-                    setMessage("");
-                  }}
-                  disabled={grantingUserId === user.id || deletingUserId === user.id}
-                >
-                  {creditUserId === user.id ? "Закрити" : "Нарахувати"}
-                </button>
-                {user.id !== account.id && (
-                  <button
-                    className="admin-delete-button"
-                    onClick={() => deleteUser(user)}
-                    disabled={deletingUserId === user.id || grantingUserId === user.id}
-                  >
-                    {deletingUserId === user.id ? "Видалення..." : "Видалити"}
-                  </button>
-                )}
-              </div>
-              {creditUserId === user.id && (
-                <div className="admin-user-credit-form">
-                  <label>
-                    Сума (1–100 000 кредитів)
-                    <input
-                      type="number"
-                      min="1"
-                      max="100000"
-                      step="1"
-                      value={creditAmount}
-                      onChange={(event) => setCreditAmount(event.target.value)}
-                      placeholder="Наприклад, 500"
-                    />
-                  </label>
+          {filteredUsers.map((user) => {
+            const displayName = user.id === account.id ? account.displayName : user.displayName;
+            return (
+              <article className="admin-user" key={user.id}>
+                <strong>{displayName || "Без нікнейма"}</strong>
+                <span>Email: {user.email}</span>
+                <span>Баланс: {user.balance.toLocaleString("uk-UA")} кредитів</span>
+                <span>Найбільший виграш: {user.bestWin.toLocaleString("uk-UA")}</span>
+                <span>Усього поповнено: {user.totalCreditsGranted.toLocaleString("uk-UA")} кредитів</span>
+                <span>Усього виграно: {user.totalWinnings.toLocaleString("uk-UA")} кредитів</span>
+                <span>Реєстрація: {new Date(user.createdAt).toLocaleDateString("uk-UA")}</span>
+                <div className="admin-user-actions">
                   <button
                     className="admin-credit-button"
-                    onClick={() => grantCredits(user)}
-                    disabled={grantingUserId === user.id}
+                    onClick={() => {
+                      setCreditUserId(creditUserId === user.id ? "" : user.id);
+                      setCreditAmount("");
+                      setMessage("");
+                    }}
+                    disabled={grantingUserId === user.id || deletingUserId === user.id}
                   >
-                    {grantingUserId === user.id ? "Нарахування..." : "Підтвердити"}
+                    {creditUserId === user.id ? "Закрити" : "Нарахувати"}
                   </button>
+                  {user.id !== account.id && (
+                    <button
+                      className="admin-delete-button"
+                      onClick={() => deleteUser(user)}
+                      disabled={deletingUserId === user.id || grantingUserId === user.id}
+                    >
+                      {deletingUserId === user.id ? "Видалення..." : "Видалити"}
+                    </button>
+                  )}
                 </div>
-              )}
-            </article>
-          ))}
+                {creditUserId === user.id && (
+                  <div className="admin-user-credit-form">
+                    <label>
+                      Сума (1–100 000 кредитів)
+                      <input
+                        type="number"
+                        min="1"
+                        max="100000"
+                        step="1"
+                        value={creditAmount}
+                        onChange={(event) => setCreditAmount(event.target.value)}
+                        placeholder="Наприклад, 500"
+                      />
+                    </label>
+                    <button
+                      className="admin-credit-button"
+                      onClick={() => grantCredits(user)}
+                      disabled={grantingUserId === user.id}
+                    >
+                      {grantingUserId === user.id ? "Нарахування..." : "Підтвердити"}
+                    </button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

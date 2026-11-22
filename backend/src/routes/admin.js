@@ -24,7 +24,7 @@ router.get("/users", requireAuth, requireAdmin, async (request, response) => {
   try {
     const users = await request.app.locals.database
       .collection("users")
-      .find({}, { projection: { email: 1, createdAt: 1 } })
+      .find({}, { projection: { email: 1, displayName: 1, createdAt: 1 } })
       .sort({ createdAt: -1 })
       .toArray();
     const userIds = users.map((user) => user._id.toString());
@@ -49,6 +49,7 @@ router.get("/users", requireAuth, requireAdmin, async (request, response) => {
       return {
         id: user._id.toString(),
         email: user.email,
+        displayName: user.displayName || "",
         createdAt: user.createdAt,
         balance: progress?.balance ?? 0,
         lastWin: progress?.lastWin ?? 0,
@@ -93,6 +94,7 @@ router.post("/users/:userId/credits", requireAuth, requireAdmin, async (request,
           totalWinnings: 0,
           totalCreditsGranted: 0,
           fruitDeluxeFreeSpins: 0,
+          pharaohFreeSpins: 0,
           history: [],
         },
       },

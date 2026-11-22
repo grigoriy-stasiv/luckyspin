@@ -7,6 +7,7 @@ import PopularGames from "./components/PopularGames.jsx";
 import AuthPanel from "./components/AuthPanel.jsx";
 import AdminPanel from "./components/AdminPanel.jsx";
 import FruitFortuneDeluxe from "./components/FruitFortuneDeluxe.jsx";
+import PharaohTreasures from "./components/PharaohTreasures.jsx";
 import AutoSpinControls from "./components/AutoSpinControls.jsx";
 
 function App() {
@@ -53,10 +54,12 @@ function App() {
   const [account, setAccount] = useState(() => {
     const token = localStorage.getItem("luckyspin-token");
     const email = localStorage.getItem("luckyspin-email");
-    return token && email ? { email } : null;
+    const displayName = localStorage.getItem("luckyspin-display-name") || "";
+    return token && email ? { email, displayName } : null;
   });
   const [isProgressReady, setIsProgressReady] = useState(false);
   const [fruitDeluxeFreeSpins, setFruitDeluxeFreeSpins] = useState(0);
+  const [pharaohFreeSpins, setPharaohFreeSpins] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(() =>
@@ -219,6 +222,12 @@ function App() {
     window.history.pushState({ section: "games", game: "fruit-fortune-deluxe" }, "", "#games/fruit-fortune-deluxe");
   };
 
+  const openPharaohGame = () => {
+    setActiveSection("games");
+    setSelectedGameId("pharaoh-treasures");
+    window.history.pushState({ section: "games", game: "pharaoh-treasures" }, "", "#games/pharaoh-treasures");
+  };
+
   useEffect(() => {
     const syncSectionWithUrl = () => {
       const isGamesSection = window.location.hash.startsWith("#games");
@@ -286,6 +295,7 @@ function App() {
           setBestWin(cloudProgress.bestWin);
           setHistory(cloudProgress.history);
           setFruitDeluxeFreeSpins(cloudProgress.fruitDeluxeFreeSpins ?? 0);
+          setPharaohFreeSpins(cloudProgress.pharaohFreeSpins ?? 0);
           setIsProgressReady(true);
           setMessage("Прогрес синхронізовано з акаунтом");
         }
@@ -472,12 +482,22 @@ function App() {
   const handleLogin = ({ token, user }) => {
     localStorage.setItem("luckyspin-token", token);
     localStorage.setItem("luckyspin-email", user.email);
+    localStorage.setItem("luckyspin-display-name", user.displayName || "");
     setAccount(user);
+  };
+
+  const handleDisplayNameChange = (displayName) => {
+    const nextDisplayName = displayName || "";
+    setAccount((currentAccount) => currentAccount
+      ? { ...currentAccount, displayName: nextDisplayName }
+      : currentAccount);
+    localStorage.setItem("luckyspin-display-name", nextDisplayName);
   };
 
   const handleLogout = () => {
     localStorage.removeItem("luckyspin-token");
     localStorage.removeItem("luckyspin-email");
+    localStorage.removeItem("luckyspin-display-name");
     localStorage.removeItem("luckyspin-progress-owner");
     setAccount(null);
     setIsAdmin(false);
@@ -490,6 +510,7 @@ function App() {
     setBestWin(0);
     setHistory([]);
     setFruitDeluxeFreeSpins(0);
+    setPharaohFreeSpins(0);
     setMessage("Ви вийшли з акаунта");
   };
 
@@ -500,13 +521,19 @@ function App() {
     <div className="app">
       <Header
         balance={balance}
+        displayName={account?.displayName || account?.email || ""}
         isAdmin={isAdmin}
         isAdminPanelOpen={isAdminPanelOpen}
         onToggleAdminPanel={() => setIsAdminPanelOpen((isOpen) => !isOpen)}
         activeSection={activeSection}
         onNavigate={navigateSection}
       />
-      <AuthPanel account={account} onLogin={handleLogin} onLogout={handleLogout} />
+      <AuthPanel
+        account={account}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
+        onDisplayNameChange={handleDisplayNameChange}
+      />
       <AdminPanel
         account={account}
         isOpen={isAdminPanelOpen}
@@ -673,10 +700,31 @@ function App() {
           />
         )}
 
+        {selectedGameId === "pharaoh-treasures" && (
+          <PharaohTreasures
+            account={account}
+            isProgressReady={isProgressReady}
+            bet={bet}
+            balance={balance}
+            freeSpins={pharaohFreeSpins}
+            onBack={() => navigateSection("games")}
+            onSelectBet={setBet}
+            onBalanceChanged={setBalance}
+            onProgressUpdated={(progress) => {
+              setBalance(progress.balance);
+              setLastWin(progress.lastWin);
+              setBestWin(progress.bestWin);
+              setHistory(progress.history);
+              setPharaohFreeSpins(progress.pharaohFreeSpins ?? 0);
+            }}
+          />
+        )}
+
         {activeSection === "games" && !selectedGameId && (
           <PopularGames
             onSelectClassicFruit={openClassicFruitGame}
             onSelectFruitDeluxe={openFruitDeluxeGame}
+            onSelectPharaohTreasures={openPharaohGame}
           />
         )}
       </main>
