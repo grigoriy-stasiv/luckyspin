@@ -20,7 +20,7 @@ function PopularGames({ onSelectClassicFruit, onSelectFruitDeluxe, onSelectPhara
           <div className="game-image">🍋</div>
           <h3>Fruit Fortune Deluxe</h3>
           <p>Новий автомат із 5 барабанами та 3 рядами</p>
-          <button onClick={onSelectFruitDeluxe}>Відкрити</button>
+          <button onClick={onSelectFruitDeluxe}>Грати</button>
         </article>
 
         <article className="game-card">

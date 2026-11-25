@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 function Header({
   balance,
   displayName,
@@ -7,19 +9,53 @@ function Header({
   activeSection,
   onNavigate,
 }) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const navigateTo = (section) => {
+    onNavigate(section);
+    setIsMenuOpen(false);
+  };
+
   return (
     <header className="header">
-      <div className="logo">
+      <button
+        className="logo"
+        type="button"
+        aria-label="LuckySpin — на головну"
+        onClick={() => navigateTo("home")}
+      >
         <span className="logo-icon">♛</span>
         <span>LUCKY</span>
         <strong>SPIN</strong>
-      </div>
+      </button>
 
-      <nav className="nav">
-        <button className={activeSection === "home" ? "active" : ""} onClick={() => onNavigate("home")}>Головна</button>
-        <button className={activeSection === "games" ? "active" : ""} onClick={() => onNavigate("games")}>Ігри</button>
-        <a href="/">Бонуси</a>
-        <a href="/">Турніри</a>
+      <button
+        className="mobile-nav-toggle"
+        type="button"
+        aria-label={isMenuOpen ? "Закрити меню" : "Відкрити меню"}
+        aria-expanded={isMenuOpen}
+        aria-controls="main-navigation"
+        onClick={() => setIsMenuOpen((isOpen) => !isOpen)}
+      >
+        {isMenuOpen ? "✕" : "☰"}
+      </button>
+      <nav id="main-navigation" className={`nav ${isMenuOpen ? "nav-open" : ""}`}>
+        <button className={activeSection === "home" ? "active" : ""} onClick={() => navigateTo("home")}>Головна</button>
+        <button className={activeSection === "games" ? "active" : ""} onClick={() => navigateTo("games")}>Ігри</button>
+        <a href="/" onClick={() => setIsMenuOpen(false)}>Бонуси</a>
+        <a href="/" onClick={() => setIsMenuOpen(false)}>Турніри</a>
+        {isAdmin && (
+          <button
+            className="nav-admin-button"
+            onClick={() => {
+              onToggleAdminPanel();
+              setIsMenuOpen(false);
+            }}
+            aria-expanded={isAdminPanelOpen}
+          >
+            {isAdminPanelOpen ? "Закрити адмін-панель" : "Адмін-панель"}
+          </button>
+        )}
       </nav>
 
       <div className="header-actions">

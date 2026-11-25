@@ -56,6 +56,11 @@ a {
   display: flex;
   align-items: center;
   gap: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
 
   font-size: 22px;
   font-weight: 800;
@@ -118,7 +123,8 @@ a {
   white-space: nowrap;
 }
 
-.admin-header-button {
+.admin-header-button,
+.nav-admin-button {
   padding: 9px 13px;
   border: 1px solid #ffc107;
   border-radius: 7px;
@@ -126,6 +132,10 @@ a {
   color: #ffc107;
   font-weight: 700;
   cursor: pointer;
+}
+
+.nav-admin-button {
+  display: none;
 }
 
 .balance {
@@ -1268,13 +1278,71 @@ a {
 
 /* RESPONSIVE */
 
+.mobile-nav-toggle {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .header {
-    padding: 0 25px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "logo actions toggle"
+      "nav nav nav";
+    min-height: 82px;
+    height: auto;
+    column-gap: 12px;
+    padding: 12px 25px;
+  }
+
+  .logo {
+    grid-area: logo;
+  }
+
+  .header-actions {
+    grid-area: actions;
+    min-width: 0;
+  }
+
+  .header-actions .admin-header-button {
+    display: none;
+  }
+
+  .nav-admin-button {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .mobile-nav-toggle {
+    grid-area: toggle;
+    justify-self: end;
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border: 1px solid rgba(255, 193, 7, 0.45);
+    border-radius: 8px;
+    background: #15120b;
+    color: #ffc107;
+    font-size: 21px;
   }
 
   .nav {
+    grid-area: nav;
     display: none;
+    flex: 0 0 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0 12px;
+  }
+
+  .nav.nav-open {
+    display: flex;
+  }
+
+  .nav a,
+  .nav button {
+    padding: 9px 8px;
   }
 
   .main {
@@ -1349,7 +1417,20 @@ a {
 
 @media (max-width: 600px) {
   .header {
-    height: 70px;
+    min-height: 70px;
+    column-gap: 8px;
+    row-gap: 8px;
+    padding: 10px 15px;
+  }
+
+  .logo {
+    gap: 4px;
+    font-size: 17px;
+    letter-spacing: 1px;
+  }
+
+  .logo-icon {
+    font-size: 23px;
   }
 
   .login-button {
@@ -1361,16 +1442,30 @@ a {
   }
 
   .balance {
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .balance span {
     display: none;
   }
 
+  .balance strong {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
   .header-actions {
-    gap: 10px;
+    gap: 8px;
   }
 
   .header-user-name {
     max-width: 125px;
     font-size: 11px;
+  }
+
+  .header-actions .balance {
+    flex-shrink: 0;
   }
 
   .pharaoh-marquee {
@@ -1443,7 +1538,13 @@ a {
   .stat-item span {
     font-size: 9px;
   }
-} 
+}
+
+@media (max-width: 380px) {
+  .header-user-name {
+    max-width: 72px;
+  }
+}
 
 .auth-area {
   max-width: 1400px;
