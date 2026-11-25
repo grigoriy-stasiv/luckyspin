@@ -1,7 +1,26 @@
 import { useEffect, useState } from "react";
 
+function getPasswordResetTokenFromHash() {
+  const hash = window.location.hash;
+  if (!hash.startsWith("#reset-password?")) {
+    return "";
+  }
+
+  return new URLSearchParams(hash.slice(hash.indexOf("?") + 1)).get("token") || "";
+}
+
 function AuthPanel({ account, onLogin, onLogout, onDisplayNameChange }) {
   const [mode, setMode] = useState("login");
+  const [isAuthPanelOpen, setIsAuthPanelOpen] = useState(false);
+  const [passwordResetToken, setPasswordResetToken] = useState(getPasswordResetTokenFromHash);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetRequestMessage, setResetRequestMessage] = useState("");
+  const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
+  const [resetPasswordDraft, setResetPasswordDraft] = useState("");
+  const [confirmResetPasswordDraft, setConfirmResetPasswordDraft] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -16,13 +35,33 @@ function AuthPanel({ account, onLogin, onLogout, onDisplayNameChange }) {
   const [isNameEditing, setIsNameEditing] = useState(false);
   const [displayNameDraft, setDisplayNameDraft] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
+  const [isPasswordEditing, setIsPasswordEditing] = useState(false);
+  const [newPasswordDraft, setNewPasswordDraft] = useState("");
+  const [confirmPasswordDraft, setConfirmPasswordDraft] = useState("");
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [profileMessage, setProfileMessage] = useState("");
+
+  useEffect(() => {
+    const syncPasswordResetToken = () => {
+      const token = getPasswordResetTokenFromHash();
+      setPasswordResetToken(token);
+      if (token) {
+        setIsAuthPanelOpen(true);
+      }
+    };
+
+    window.addEventListener("hashchange", syncPasswordResetToken);
+    return () => window.removeEventListener("hashchange", syncPasswordResetToken);
+  }, []);
 
   useEffect(() => {
     setProfile(null);
     setIsProfileOpen(false);
     setIsPhoneEditing(false);
     setIsNameEditing(false);
+    setIsPasswordEditing(false);
+    setNewPasswordDraft("");
+    setConfirmPasswordDraft("");
     setProfileMessage("");
   }, [account?.email]);
 
@@ -30,6 +69,7 @@ function AuthPanel({ account, onLogin, onLogout, onDisplayNameChange }) {
     if (isProfileOpen) {
       setIsProfileOpen(false);
       setIsPhoneEditing(false);
+      setIsPasswordEditing(false);
       return;
     }
 
@@ -121,6 +161,102 @@ function AuthPanel({ account, onLogin, onLogout, onDisplayNameChange }) {
     }
   };
 
+  const saveNewPassword = async (event) => {
+    event.preventDefault();
+    setProfileMessage("");
+
+    if (newPasswordDraft !== confirmPasswordDraft) {
+      setProfileMessage("Нові паролі не збігаються.");
+      return;
+    }
+
+    setIsSavingPassword(true);
+    try {
+      const token = localStorage.getItem("luckyspin-token");
+      const response = await fetch("/api/auth/password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newPassword: newPasswordDraft }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Не вдалося змінити пароль");
+      }
+
+      setCurrentPasswordDraft("");
+      setNewPasswordDraft("");
+      setConfirmPasswordDraft("");
+      setIsPasswordEditing(false);
+      setProfileMessage(result.message || "Пароль успішно змінено.");
+    } catch (error) {
+      setProfileMessage(error.message || "Не вдалося з’єднатися із сервером");
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
+
+  const requestPasswordReset = async (event) => {
+    event.preventDefault();
+    setIsSendingResetEmail(true);
+    setResetRequestMessage("");
+
+    try {
+      const response = await fetch("/api/auth/password-reset/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resetEmail }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Не вдалося надіслати лист");
+      }
+      setResetRequestMessage(result.message);
+    } catch (error) {
+      setResetRequestMessage(error.message || "Не вдалося з’єднатися із сервером");
+    } finally {
+      setIsSendingResetEmail(false);
+    }
+  };
+
+  const confirmPasswordReset = async (event) => {
+    event.preventDefault();
+    setResetMessage("");
+
+    if (resetPasswordDraft !== confirmResetPasswordDraft) {
+      setResetMessage("Нові паролі не збігаються.");
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const response = await fetch("/api/auth/password-reset/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: passwordResetToken, newPassword: resetPasswordDraft }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Не вдалося змінити пароль");
+      }
+
+      setResetPasswordDraft("");
+      setConfirmResetPasswordDraft("");
+      setPasswordResetToken("");
+      setIsForgotPasswordOpen(false);
+      setIsAuthPanelOpen(true);
+      setMessage(result.message || "Пароль змінено. Тепер увійдіть із новим паролем.");
+      setPassword("");
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    } catch (error) {
+      setResetMessage(error.message || "Не вдалося з’єднатися із сервером");
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setMessage("");
@@ -163,9 +299,45 @@ function AuthPanel({ account, onLogin, onLogout, onDisplayNameChange }) {
 
   return (
     <div className="auth-area">
-      <details className="auth-panel">
-        <summary>{account ? account.email : "Вхід або реєстрація"}</summary>
-        {account ? (
+      <details
+        className="auth-panel"
+        open={isAuthPanelOpen || Boolean(passwordResetToken)}
+        onToggle={(event) => setIsAuthPanelOpen(event.currentTarget.open)}
+      >
+        <summary>{passwordResetToken ? "Відновлення пароля" : account ? account.email : "Вхід або реєстрація"}</summary>
+        {passwordResetToken ? (
+          <form className="auth-content auth-form" onSubmit={confirmPasswordReset}>
+            <h2>Задайте новий пароль</h2>
+            <label>
+              Новий пароль (8–72 символи)
+              <input
+                type="password"
+                value={resetPasswordDraft}
+                onChange={(event) => setResetPasswordDraft(event.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={72}
+                required
+              />
+            </label>
+            <label>
+              Повторіть новий пароль
+              <input
+                type="password"
+                value={confirmResetPasswordDraft}
+                onChange={(event) => setConfirmResetPasswordDraft(event.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={72}
+                required
+              />
+            </label>
+            <button className="auth-submit" type="submit" disabled={isResettingPassword}>
+              {isResettingPassword ? "Збереження..." : "Зберегти новий пароль"}
+            </button>
+            <p className="auth-message" role="status">{resetMessage}</p>
+          </form>
+        ) : account ? (
           <div className="auth-content">
             <p>Ви увійшли до акаунта LuckySpin.</p>
             {message && <p className="auth-message" role="status">{message}</p>}
@@ -232,6 +404,61 @@ function AuthPanel({ account, onLogin, onLogout, onDisplayNameChange }) {
                     {profile.displayName ? "Змінити нікнейм" : "Додати нікнейм"}
                   </button>
                 )}
+                {isPasswordEditing ? (
+                  <form className="profile-edit-form" onSubmit={saveNewPassword}>
+                    <label>
+                      Новий пароль (8–72 символи)
+                      <input
+                        type="password"
+                        value={newPasswordDraft}
+                        onChange={(event) => setNewPasswordDraft(event.target.value)}
+                        autoComplete="new-password"
+                        minLength={8}
+                        maxLength={72}
+                        required
+                      />
+                    </label>
+                    <label>
+                      Повторіть новий пароль
+                      <input
+                        type="password"
+                        value={confirmPasswordDraft}
+                        onChange={(event) => setConfirmPasswordDraft(event.target.value)}
+                        autoComplete="new-password"
+                        minLength={8}
+                        maxLength={72}
+                        required
+                      />
+                    </label>
+                    <div>
+                      <button className="profile-open-button" type="submit" disabled={isSavingPassword}>
+                        {isSavingPassword ? "Збереження..." : "Змінити пароль"}
+                      </button>
+                      <button
+                        className="auth-switch"
+                        type="button"
+                        disabled={isSavingPassword}
+                        onClick={() => {
+                          setNewPasswordDraft("");
+                          setConfirmPasswordDraft("");
+                          setIsPasswordEditing(false);
+                        }}
+                      >
+                        Скасувати
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    className="profile-open-button"
+                    onClick={() => {
+                      setIsPasswordEditing(true);
+                      setProfileMessage("");
+                    }}
+                  >
+                    Змінити пароль
+                  </button>
+                )}
                 {isPhoneEditing ? (
                   <form className="profile-phone-form" onSubmit={savePhone}>
                     <label>
@@ -288,6 +515,35 @@ function AuthPanel({ account, onLogin, onLogout, onDisplayNameChange }) {
               Вийти
             </button>
           </div>
+        ) : isForgotPasswordOpen ? (
+          <form className="auth-content auth-form" onSubmit={requestPasswordReset}>
+            <h2>Відновлення пароля</h2>
+            <p>Вкажіть email акаунта — на нього надійде посилання для створення нового пароля.</p>
+            <label>
+              Email
+              <input
+                type="email"
+                value={resetEmail}
+                onChange={(event) => setResetEmail(event.target.value)}
+                autoComplete="email"
+                required
+              />
+            </label>
+            <button className="auth-submit" type="submit" disabled={isSendingResetEmail}>
+              {isSendingResetEmail ? "Надсилання..." : "Надіслати лист"}
+            </button>
+            <p className="auth-message" role="status">{resetRequestMessage}</p>
+            <button
+              type="button"
+              className="auth-switch"
+              onClick={() => {
+                setIsForgotPasswordOpen(false);
+                setResetRequestMessage("");
+              }}
+            >
+              Повернутися до входу
+            </button>
+          </form>
         ) : (
           <form className="auth-content auth-form" onSubmit={handleSubmit}>
             <h2>{mode === "login" ? "Вхід" : "Створити акаунт"}</h2>
@@ -329,6 +585,19 @@ function AuthPanel({ account, onLogin, onLogout, onDisplayNameChange }) {
             <button className="auth-submit" disabled={isSubmitting}>
               {isSubmitting ? "Зачекайте..." : mode === "login" ? "Увійти" : "Зареєструватися"}
             </button>
+            {mode === "login" && (
+              <button
+                type="button"
+                className="auth-switch"
+                onClick={() => {
+                  setResetEmail(email);
+                  setResetRequestMessage("");
+                  setIsForgotPasswordOpen(true);
+                }}
+              >
+                Забули пароль?
+              </button>
+            )}
             <button
               type="button"
               className="auth-switch"
